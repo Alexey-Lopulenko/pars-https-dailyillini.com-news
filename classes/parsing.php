@@ -256,7 +256,7 @@ class parsing
         $htmlData =  $this->getDataFromSite();
         preg_match_all('#<span\sclass="time-wrapper">(.*)<\/span>#Uis', $htmlData,$date);
 
-        return strip_tags($date[0][0]);
+        return strip_tags($date[0][6]);
     }
 
     public function getHeadingNews()
@@ -267,37 +267,95 @@ class parsing
         return strip_tags($heading[0][0]);
     }
 
+    /**
+     * @return string
+     */
     public function getTextNews()
     {
 
         $htmlData = $this->getDataFromSite();
-        preg_match_all('#<span\sclass="s[1-9]">(.*)<\/span>#Uis', $htmlData,$textNews);
+        preg_match_all('#<span\sclass="storycontent">(.*)<\/span>#Uis', $htmlData, $textNews);
+        preg_match_all('#<p\>(.*)<\/p>#Uis', $textNews[0][0], $textNewsAll);
 
-        $strData = implode(" ", $textNews[0]);
+
+        if (!($textNewsAll[1])) {
+            preg_match_all('#<span\sclass="s[1-9]">(.*)<\/span>#Uis', $htmlData, $textNews);
+
+            if (!($textNews[1])){
+                preg_match_all('#<span\sclass="storycontent">(.*)<\/span>#Uis', $htmlData, $textNews);
+                $strData = strip_tags($textNews[0][0]);
+                return $strData;
+            }else{
+                $strData = implode(" ", $textNews[0]);
+                $strData = strip_tags($strData);
+                return $strData;
+            }
 
 
-        if($strData){
-            return strip_tags($strData);
-        }else{
+        }
+
+        $strData = implode(" ", $textNewsAll[0]);
+        $strData = strip_tags($strData);
+
+
+        if ($strData) {
+            return $strData;
+        } else {
             return 'Error tags!';
         }
 
     }
 
+    /**
+     * @return mixed
+     * return url img in news page (site)
+     */
+
     public function getImageUrl()
     {
-        //catboxphoto feature-image
         $htmlData = $this->getDataFromSite();
-        preg_match_all('#<div\sclass="photowrap">(.*)<\/div>#Uis', $htmlData,$imgLink);
+        preg_match_all('#<div\sclass="photowrap">(.*)<\/div>#Uis', $htmlData, $imgLink);
 
-        if($imgLink[0][0]){
-            preg_match_all('/(img|src)=("|\')[^"\'>]+/i', $imgLink[0][0], $img);
+        if ($imgLink[0][0]) {
+            preg_match_all('/(img|src)=("|\')[^"\'>]+/i', $imgLink[0][0], $media);
+            $urlImg = preg_replace('/(img|src)("|\'|="|=\')(.*)/i', "$3", $media[0]);
 
         }
 
+        return $urlImg[0];
+    }
 
-        return $img[0][0];
+    /**
+     * @param $imgUrl
+     * @return bool|null|string
+     */
+    public function saveImage($imgUrl)
+    {
+        if(get_headers($imgUrl, 1)){
+            $pos = strripos($imgUrl, "/");
+            $name = mb_substr($imgUrl, $pos + 1);
+            $path = "img/" . $name;
 
+            copy($imgUrl, $path);
+
+            $real_path = realpath($path);
+            return $real_path;
+        }
+        return Null;
+
+    }
+    public function nextPage()
+    {
+        $htmlData = $this->getDataFromSite();
+        preg_match_all('#<a href="[^>]+" >Next\sPage\s&raquo;<\/a>#', $htmlData, $nextPageLink);
+        preg_match_all('#(?<=")([\s\S]+?)(?=")#Uis', $nextPageLink[0][0], $href);
+
+        return $href[0][0];
+
+    }
+
+    public function setVisitedPagesInNull(){
+        $this->visitedPages = [];
     }
 
 }

@@ -17,6 +17,7 @@
 </html>
 
 <?php
+ini_set("max_execution_time", 360);
 require_once 'classes/parsing.php';
 require_once 'setting.php';
 
@@ -27,54 +28,91 @@ $siteUrl = $_POST['site'];
     if($siteUrl){
         $pars = new parsing();
         $pars->setCurrentUrl($siteUrl);
-//        $pars->getImageLink();
         $pars->setInternalLinks();
-//        $test = $pars->getInternalLinks();
         $arrLinksNews = $pars->getNewsLinks();
         echo '<pre>';
             print_r($arrLinksNews);
-        echo '</pre>';
+        echo '</p re>';
 
 
-        $sql = "INSERT INTO news (h1, text, created, img, url_page) VALUES (?,?,?,?,?)";
-        $dataFromTableNews = $pdo->query("SELECT * FROM news")->fetchAll();
 
-
+        $sql = "INSERT INTO news (h1, text, created, url_img_in_site, url_page, path_img_in_my_server,created_at) VALUES (?,?,?,?,?,?,?)";
 
         $i = 0;
+        $countPage = 1;
+
         while ($arrLinksNews) {
             $newLink = new parsing();
             $newLink->setCurrentUrl($arrLinksNews[$i]);
-//            $newLink->getImageLink();
 
              $dateCreated = $newLink->getDateCreateNews();
              $h1 = $newLink->getHeadingNews();
              $textNews = $newLink->getTextNews();
-             $img = $newLink->getImageUrl();
-             if (!($img)){
-                 $img = 'no image!';
+             $url_img_in_site = $newLink->getImageUrl();
+             $path_img_in_my_server = $newLink->saveImage($url_img_in_site);
+             $today = getdate();
+
+             if (!($url_img_in_site)){
+                 $url_img_in_site = 'no image!';
              }
 
             echo '<hr>';
             echo '<pre>';
-            print_r($arrLinksNews[$i]);
+            print_r($h1);
+            echo '<br>';
+            echo '<pre>';
+            print_r($textNews);
+            echo '<br>';
+            print_r($url_img_in_site);
+            echo '<br>';
+            print_r($path_img_in_my_server);
             echo '</pre>';
             echo '<hr>';
 
-            if (!in_array($h1, $dataFromTableNews, true)){
-                $pdo->prepare($sql)->execute([$h1, $textNews, $dateCreated, $img, $arrLinksNews[$i]]);
-            }
+            $stmt = $pdo->prepare('SELECT * FROM news WHERE h1 = :h1');
+            $stmt->execute(['h1' => $h1]);
+            $row = $stmt->fetch();
 
+            //save in db
+            if(!$row){
+                $pdo->prepare($sql)->execute([$h1, $textNews, $dateCreated, $url_img_in_site, $arrLinksNews[$i], $path_img_in_my_server,$today[0]]);
+            }
 
             $pars->addInternalLink($arrLinksNews[$i]);
             $pars->setVisitedPages($arrLinksNews[$i]);
             $pars->deleteInternalLinks($arrLinksNews[$i]);
 
-
-            if (count($pars->getVisitedPages()) >= 6) {
+            if ($i >= 12) {
+                echo '<pre><strong>';
+                print_r($arrLinksNews);
+                echo '</strong></pre><hr>';
                 break;
             }
+            if ($i+1 == count($arrLinksNews)) {
+                $i = 0;
+                $nextPage = $nextPage = $pars->nextPage();
+                echo '<hr><pre>';
+                print_r($nextPage);
+                echo '</pre><hr>';
+                $pars->setVisitedPagesInNull();
+                $pars->setCurrentUrl($nextPage);
+                $pars->setInternalLinks();
+                $arrLinksNews =[];
+                $arrLinksNews = $pars->getNewsLinks();
+
+                echo '<pre>';
+                    print_r($arrLinksNews);
+                echo '</pre><hr>';
+
+                if ($countPage == 3){
+                    echo '4';
+                    break;
+                }
+                $countPage++;
+            }
             $i++;
+
+
         }
     }
 }

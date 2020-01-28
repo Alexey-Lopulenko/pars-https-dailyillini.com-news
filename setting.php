@@ -6,7 +6,7 @@ $password = 'root';
 try {
 
     $pdo = new PDO($dsn, $user, $password);
-    var_dump($pdo);
+//    var_dump($pdo);
 /*    echo '<hr>';
     $data = $pdo->query("SELECT * FROM news")->fetchAll();
 
