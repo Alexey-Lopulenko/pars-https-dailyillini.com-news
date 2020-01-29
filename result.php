@@ -22,6 +22,7 @@
         require_once 'setting.php';
         $data = $pdo->query("SELECT * FROM news ORDER BY created_at ASC")->fetchAll();
         $i = 1;
+        if($data):
         foreach ($data as $row):
             ?>
             <div class="col-md-12">
@@ -45,7 +46,7 @@
                 </div>
             </div>
             <?php $i++; ?>
-        <?php endforeach; ?>
+        <?php endforeach; endif;?>
     </div>
 </div>
 </body>
