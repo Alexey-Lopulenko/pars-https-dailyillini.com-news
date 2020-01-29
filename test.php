@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -6,7 +5,9 @@
     <title>pars</title>
 </head>
 <body>
-<h1><center>pars news</center></h1>
+<h1>
+    <center>pars news</center>
+</h1>
 <hr>
 <form action="test.php" method="post">
     <p>Site: <input name="site" type="url"></p>
@@ -21,20 +22,18 @@ ini_set("max_execution_time", 360);
 require_once 'classes/parsing.php';
 require_once 'setting.php';
 
-if($_SERVER['REQUEST_METHOD'] == 'POST'){
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
-$siteUrl = $_POST['site'];
+    $siteUrl = $_POST['site'];
 
-    if($siteUrl){
+    if ($siteUrl) {
         $pars = new parsing();
         $pars->setCurrentUrl($siteUrl);
         $pars->setInternalLinks();
         $arrLinksNews = $pars->getNewsLinks();
         echo '<pre>';
-            print_r($arrLinksNews);
+        print_r($arrLinksNews);
         echo '</p re>';
-
-
 
         $sql = "INSERT INTO news (h1, text, created, url_img_in_site, url_page, path_img_in_my_server,created_at) VALUES (?,?,?,?,?,?,?)";
 
@@ -45,16 +44,16 @@ $siteUrl = $_POST['site'];
             $newLink = new parsing();
             $newLink->setCurrentUrl($arrLinksNews[$i]);
 
-             $dateCreated = $newLink->getDateCreateNews();
-             $h1 = $newLink->getHeadingNews();
-             $textNews = $newLink->getTextNews();
-             $url_img_in_site = $newLink->getImageUrl();
-             $path_img_in_my_server = $newLink->saveImage($url_img_in_site);
-             $today = getdate();
+            $dateCreated = $newLink->getDateCreateNews();
+            $h1 = $newLink->getHeadingNews();
+            $textNews = $newLink->getTextNews();
+            $url_img_in_site = $newLink->getImageUrl();
+            $path_img_in_my_server = $newLink->saveImage($url_img_in_site);
+            $today = getdate();
 
-             if (!($url_img_in_site)){
-                 $url_img_in_site = 'no image!';
-             }
+            if (!($url_img_in_site)) {
+                $url_img_in_site = 'no image!';
+            }
 
             echo '<hr>';
             echo '<pre>';
@@ -74,21 +73,25 @@ $siteUrl = $_POST['site'];
             $row = $stmt->fetch();
 
             //save in db
-            if(!$row){
-                $pdo->prepare($sql)->execute([$h1, $textNews, $dateCreated, $url_img_in_site, $arrLinksNews[$i], $path_img_in_my_server,$today[0]]);
+            if (!$row) {
+                $pdo->prepare($sql)->execute([$h1, $textNews, $dateCreated, $url_img_in_site, $arrLinksNews[$i], $path_img_in_my_server, $today[0]]);
+            } else {
+                $sql = "UPDATE news SET created_at=? WHERE h1=?";
+                $pdo->prepare($sql)->execute([$today, $h1]);
             }
 
             $pars->addInternalLink($arrLinksNews[$i]);
             $pars->setVisitedPages($arrLinksNews[$i]);
             $pars->deleteInternalLinks($arrLinksNews[$i]);
 
-            if ($i >= 12) {
-                echo '<pre><strong>';
-                print_r($arrLinksNews);
-                echo '</strong></pre><hr>';
-                break;
-            }
-            if ($i+1 == count($arrLinksNews)) {
+//            if ($i+1 == 3) {
+//                break;
+//            }
+            if ($i + 1 == count($arrLinksNews)) {
+                if ($countPage == 3) {
+                    echo '<strong>Limit from pars</strong>';
+                    break;
+                }
                 $i = 0;
                 $nextPage = $nextPage = $pars->nextPage();
                 echo '<hr><pre>';
@@ -97,22 +100,16 @@ $siteUrl = $_POST['site'];
                 $pars->setVisitedPagesInNull();
                 $pars->setCurrentUrl($nextPage);
                 $pars->setInternalLinks();
-                $arrLinksNews =[];
+                $arrLinksNews = [];
                 $arrLinksNews = $pars->getNewsLinks();
 
                 echo '<pre>';
-                    print_r($arrLinksNews);
+                print_r($arrLinksNews);
                 echo '</pre><hr>';
 
-                if ($countPage == 3){
-                    echo '4';
-                    break;
-                }
                 $countPage++;
             }
             $i++;
-
-
         }
     }
 }

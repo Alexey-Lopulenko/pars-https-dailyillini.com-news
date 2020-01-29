@@ -282,8 +282,28 @@ class parsing
             preg_match_all('#<span\sclass="s[1-9]">(.*)<\/span>#Uis', $htmlData, $textNews);
 
             if (!($textNews[1])){
-                preg_match_all('#<span\sclass="storycontent">(.*)<\/span>#Uis', $htmlData, $textNews);
-                $strData = strip_tags($textNews[0][0]);
+                preg_match_all('#(?<=<p><span\sstyle="font-weight:\s400;">)([\s\S]+?)(?=<\/span><\/p>)#Uis', $htmlData, $textNews);
+
+
+                $dom = new DOMDocument();
+                $dom->loadHTML($textNews[1][0]);
+
+                $script = $dom->getElementsByTagName('script');
+
+                $remove = [];
+                foreach($script as $item)
+                {
+                    $remove[] = $item;
+                }
+
+                foreach ($remove as $item)
+                {
+                    $item->parentNode->removeChild($item);
+                }
+
+
+                $strData = strip_tags($dom->saveHTML());
+
                 return $strData;
             }else{
                 $strData = implode(" ", $textNews[0]);
