@@ -364,14 +364,21 @@ class parsing
         return Null;
 
     }
+
+    /**
+     * @return string
+     */
     public function nextPage()
     {
         $htmlData = $this->getDataFromSite();
         preg_match_all('#<a href="[^>]+" >Next\sPage\s&raquo;<\/a>#', $htmlData, $nextPageLink);
         preg_match_all('#(?<=")([\s\S]+?)(?=")#Uis', $nextPageLink[0][0], $href);
 
-        return $href[0][0];
-
+        if (get_headers($href[0][0])) {
+            return $href[0][0];
+        } else {
+            return 'No next page';
+        }
     }
 
     public function setVisitedPagesInNull(){

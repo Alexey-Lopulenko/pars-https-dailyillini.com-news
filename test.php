@@ -88,12 +88,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 //                break;
 //            }
             if ($i + 1 == count($arrLinksNews)) {
-                if ($countPage == 3) {
-                    echo '<strong>Limit from pars</strong>';
-                    break;
-                }
+
                 $i = 0;
                 $nextPage = $nextPage = $pars->nextPage();
+                if ($countPage == 3 || $nextPage == "No next page") {
+                    echo '<strong>Limit</strong>';
+                    break;
+                }
                 echo '<hr><pre>';
                 print_r($nextPage);
                 echo '</pre><hr>';
