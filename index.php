@@ -9,7 +9,7 @@
     <center>pars news</center>
 </h1>
 <hr>
-<form action="result.php" method="post">
+<form action="index.php" method="post">
     <p>Site: <input name="site" type="url" value="https://dailyillini.com/news/"></p>
     <p><input type="submit" value="Enter"></p>
 
